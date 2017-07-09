@@ -70,6 +70,19 @@ public class MovementController : NetworkBehaviour {
 			transform.Rotate (Vector3.up * -sensitivity);
 		if (Input.GetAxis ("Mouse X") > 0)
 			transform.Rotate (Vector3.up * sensitivity);
+		if (Input.GetKeyDown (KeyCode.G)) 
+			toggleLock ();
+	}
+
+
+	void toggleLock(){
+		if (Cursor.visible) {
+			Cursor.visible = false;
+			Cursor.lockState = CursorLockMode.Locked;
+		} else {
+			Cursor.visible = true;
+			Cursor.lockState = CursorLockMode.None;
+		}
 	}
 
 			void Move(){

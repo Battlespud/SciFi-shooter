@@ -9,7 +9,7 @@ public class LaserRifle : Weapon {
 
 
 
-
+	MovementController mc;
 
 	float maxRange = 50f;
 	float reloadTimer = 0f;
@@ -19,7 +19,7 @@ public class LaserRifle : Weapon {
 	// Use this for initialization
 	void Start () {
 		cam = Camera.main;
-		damage = 5;
+		damage = 20;
 		maxAmmo = 12;
 		ammo = maxAmmo;
 		maxClips = 6;
@@ -28,6 +28,7 @@ public class LaserRifle : Weapon {
 		cooldown = .25f;
 		reloadTime = 1f;
 		canFire = true;
+		mc = GetComponentInParent<MovementController> ();
 	}
 
 	public override void AimDownSights ()
@@ -36,14 +37,23 @@ public class LaserRifle : Weapon {
 	}
 
 	public override void Fire(){
+		CmdFire ();
+	}
+
+	public void CmdFire(){
 		if (!canFire || ammo <= 0) {
 			return;
 		}
 		Debug.DrawRay (transform.position, cam.ScreenPointToRay (Input.mousePosition).direction * maxRange, Color.red, 3f);
+		RaycastHit hit;
 		ammo--;
-
-
-
+		if(Physics.Raycast(new Ray(transform.position,cam.ScreenPointToRay(Input.mousePosition).direction), out hit,maxRange))
+			{
+				if(hit.collider.gameObject.GetComponent<Player>())
+					{
+				mc.CmdDamage(damage,hit.collider.gameObject.GetComponent<Player>());
+					}
+			}
 	}
 
 	public override void Reload(){

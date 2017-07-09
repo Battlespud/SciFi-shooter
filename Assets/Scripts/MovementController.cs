@@ -77,6 +77,7 @@ public class MovementController : NetworkBehaviour {
 			GravitySetup ();
 		} else {
 			cam.enabled = false;
+			GetComponent<AudioListener> ().enabled = false;
 		}
 	}
 
@@ -106,6 +107,9 @@ public class MovementController : NetworkBehaviour {
 		}
 	}
 
+	public void CmdDamage(int i, Player p){
+		p.DoDamageTest (i);
+	}
 
 	void CatchInput(){
 		if (Input.GetKey (KeyBinds.Forward))

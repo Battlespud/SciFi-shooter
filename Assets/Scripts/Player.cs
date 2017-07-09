@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class Player : NetworkBehaviour
 {
 
+
+	public Text healthText;
     [SyncVar] public int HP;
 	//in seconds
 	[SyncVar] public float MaxStamina = 5f;
@@ -20,18 +23,26 @@ public class Player : NetworkBehaviour
 
 
 	void Start(){
-
 	}
 
     // Update is called once per frame
     void Update()
     {
-        Damage(damageAmount);
 		if (isLocalPlayer) {
 			RegenStamina ();
 
 		}
+		healthText.text = HP.ToString();
     }
+
+	public void DoDamageTest(int i){
+		Debug.Log(string.Format("HP was {0}; Applied {1} damage points; HP is {2}", HP, i, HP - i));
+		HP -= i;
+	if (HP <= 0)
+	{
+		HP = 0;
+		Debug.Log("Dead");
+	}	}
 
     public void Damage(int amount)
     {

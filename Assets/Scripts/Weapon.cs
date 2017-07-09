@@ -4,6 +4,8 @@ using UnityEngine;
 
 public abstract class Weapon : MonoBehaviour {
 
+	public Camera cam;
+
 	public int damage;
 	public int maxAmmo;
 	public int ammo;

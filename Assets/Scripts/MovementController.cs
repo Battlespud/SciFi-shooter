@@ -16,7 +16,7 @@ public enum MoveSpeed{
 
 public class MovementController : NetworkBehaviour {
 
-	public float sensitivity = 2f;
+	public float sensitivity = 12f;
 	public Camera cam;
 
 	Rigidbody rb;

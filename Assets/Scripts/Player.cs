@@ -8,12 +8,27 @@ public class Player : NetworkBehaviour
 {
 
     [SyncVar] public int HP;
-    public int damageAmount;
+	//in seconds
+	[SyncVar] public float MaxStamina = 10;
+	[SyncVar] public float Stamina;
+	//in seconds, how long to fill bar
+	float staminaRegenRate = 15;
+	bool usingStamina = false;
+	public int damageAmount;
+
+
+	void Start(){
+
+	}
 
     // Update is called once per frame
     void Update()
     {
         Damage(damageAmount);
+		if (isLocalPlayer) {
+			RegenStamina ();
+
+		}
     }
 
     public void Damage(int amount)
@@ -33,4 +48,11 @@ public class Player : NetworkBehaviour
             Debug.Log("Dead");
         }
     }
+
+	void RegenStamina(){
+		if (!usingStamina) {
+			Stamina += MaxStamina / staminaRegenRate * Time.deltaTime;
+		}
+	}
+
 }

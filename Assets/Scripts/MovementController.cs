@@ -8,17 +8,22 @@ using UnityEngine.Networking;
 
 
 public enum MoveSpeed{
+	AIM = 4,
 	WALK = 6,
-	RUN = 10,
-	SPRINT = 12
+	RUN = 12,
 };
 
 
 public class MovementController : NetworkBehaviour {
+
+	Player player;
+
 	const float GRAVITY = -18.8f; //acceleration
 	public float xSensitivity = 1f;
 	public float ySensitivity = 1f;
 	public Camera cam;
+
+	public Texture2D cursor;
 
 	float yaw = 0f;
 	float pitch = 0f;
@@ -63,8 +68,10 @@ public class MovementController : NetworkBehaviour {
 	// Use this for initialization
 	void Start () {
 		if (isLocalPlayer) {
+			player = GetComponent<Player> ();
+			Cursor.SetCursor (cursor, new Vector2(16,16), CursorMode.ForceSoftware);
 			GrabReferences ();
-			moveSpeed = MoveSpeed.RUN;
+			moveSpeed = MoveSpeed.WALK;
 			toggleLock ();
 			GravitySetup ();
 		} else {
@@ -111,8 +118,17 @@ public class MovementController : NetworkBehaviour {
 			Jump ();
 		if (Input.GetKeyDown (KeyCode.G)) 
 			toggleLock ();
+		if (Input.GetKeyDown (KeyCode.Escape)) 
+			Unlock ();
 		if (Input.GetMouseButtonDown(1))
 			ToggleSights();
+		if (Input.GetKey (KeyCode.LeftShift)) {
+			if(AimingSights)ToggleSights ();
+			if(!AimingSights)moveSpeed = MoveSpeed.RUN;
+		} else {
+			if (AimingSights) 	moveSpeed = MoveSpeed.AIM;
+			else{	moveSpeed = MoveSpeed.WALK;	}
+		}
 		if (Input.GetKeyDown(KeyBinds.ToggleWeapon))
 			ToggleHolster();
 	}
@@ -146,10 +162,12 @@ public class MovementController : NetworkBehaviour {
 	void ToggleHolster(){
 		if (WeaponDrawn && !lockoutDraw) {
 			WeaponDrawn = false;
+			toggleLock ();
 			lockoutDraw = true;
 			StartCoroutine (ShiftPosition (camDefaultPosition, .5f));
 		} else if(!lockoutDraw) {
 			WeaponDrawn = true;
+			toggleLock ();
 			lockoutDraw = true;
 			StartCoroutine (ShiftPosition (camOverShoulderPosition, .5f));
 		}
@@ -173,8 +191,13 @@ public class MovementController : NetworkBehaviour {
 			Cursor.lockState = CursorLockMode.Locked;
 		} else {
 			Cursor.visible = true;
-			Cursor.lockState = CursorLockMode.None;
+			Cursor.lockState = CursorLockMode.Locked;
 		}
+	}
+
+	void Unlock(){
+		Cursor.lockState = CursorLockMode.None;
+		Cursor.visible = true;
 	}
 
 	void Move(){

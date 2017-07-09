@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class LaserRifle : Weapon {
 
@@ -11,6 +12,9 @@ public class LaserRifle : Weapon {
 
 
 	float maxRange = 50f;
+	float reloadTimer = 0f;
+
+	public Text text;
 
 	// Use this for initialization
 	void Start () {
@@ -43,7 +47,10 @@ public class LaserRifle : Weapon {
 	}
 
 	public override void Reload(){
-
+		if(ammo != maxAmmo && clips > 0)
+		canFire = false;
+		reloadTimer = reloadTime;
+		Debug.Log ("Reloading!");
 	}
 
 
@@ -51,5 +58,17 @@ public class LaserRifle : Weapon {
 
 	// Update is called once per frame
 	void Update () {
+		if (!canFire) {
+			if (reloadTimer > 0) {
+				reloadTimer -= Time.deltaTime;
+			}
+			else if (reloadTimer <= 0) {
+				Debug.Log ("Loaded!");
+				ammo = maxAmmo;
+				canFire = true;
+				clips -= 1;
+			}
+		}
+		text.text = ammo.ToString();
 	}
 }

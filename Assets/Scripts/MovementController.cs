@@ -122,6 +122,9 @@ public class MovementController : NetworkBehaviour {
 			toggleLock ();
 		if (Input.GetKeyDown (KeyCode.Escape)) 
 			Unlock ();
+		if (Input.GetKeyDown (KeyCode.R)) 
+			
+			weapon.Reload ();
 		if (Input.GetMouseButtonDown (0))
 		if (WeaponDrawn) {
 			weapon.Fire ();

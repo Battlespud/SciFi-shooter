@@ -38,7 +38,7 @@ public class Player : NetworkBehaviour
         if (!isServer)
             return;
 
-        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.F))
+        if (Input.GetKeyDown(KeyCode.F))
         {
             Debug.Log(string.Format("HP was {0}; Applied {1} damage points; HP is {2}", HP, amount, HP - amount));
             HP -= amount;

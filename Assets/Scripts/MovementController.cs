@@ -32,6 +32,7 @@ public class MovementController : NetworkBehaviour {
 		if (isLocalPlayer) {
 			GrabReferences ();
 			moveSpeed = MoveSpeed.RUN;
+			toggleLock ();
 		} else {
 			cam.enabled = false;
 		}

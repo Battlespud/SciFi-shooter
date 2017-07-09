@@ -119,8 +119,11 @@ public class MovementController : NetworkBehaviour {
 
 
 	void ToggleSights(){
-		if (!AimingSights && !lockoutAim) {
+		if (!AimingSights && !lockoutAim && (WeaponDrawn || !lockoutDraw)) {
 			AimingSights = true;
+			if (!WeaponDrawn) {
+				ToggleHolster ();
+			}
 			lockoutAim = true;
 			StartCoroutine(ShiftFov(sightsFov,.5f));
 		} else if(!lockoutAim) {

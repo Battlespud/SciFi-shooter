@@ -9,11 +9,13 @@ public class Player : NetworkBehaviour
 
     [SyncVar] public int HP;
 	//in seconds
-	[SyncVar] public float MaxStamina = 10;
-	[SyncVar] public float Stamina;
+	[SyncVar] public float MaxStamina = 5f;
+	[SyncVar] public float Stamina = 5f;
 	//in seconds, how long to fill bar
-	float staminaRegenRate = 15;
-	bool usingStamina = false;
+	float staminaRegenRate = 12f;
+	float delay = 1.5f;
+	float delayCounter = 0f;
+	public bool usingStamina = false;
 	public int damageAmount;
 
 
@@ -51,7 +53,13 @@ public class Player : NetworkBehaviour
 
 	void RegenStamina(){
 		if (!usingStamina) {
-			Stamina += MaxStamina / staminaRegenRate * Time.deltaTime;
+			if (delayCounter <= 0f && Stamina < MaxStamina) {
+				Stamina += MaxStamina / staminaRegenRate * Time.deltaTime;
+			} else {
+				delayCounter -= Time.deltaTime;
+			}
+		} else {
+			delayCounter = delay;
 		}
 	}
 

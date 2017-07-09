@@ -8,24 +8,57 @@ using UnityEngine.Networking;
 
 
 public enum MoveSpeed{
-	WALK = 800,
-	RUN = 1400,
-	SPRINT = 2000
+	WALK = 6,
+	RUN = 10,
+	SPRINT = 12
 };
 
 
 public class MovementController : NetworkBehaviour {
-
-	public float sensitivity = 12f;
+	const float GRAVITY = -18.8f; //acceleration
+	public float xSensitivity = 1f;
+	public float ySensitivity = 1f;
 	public Camera cam;
 
-	Rigidbody rb;
+	float yaw = 0f;
+	float pitch = 0f;
+
+	CharacterController controller;
 	MoveSpeed moveSpeed;
 	public Vector3 toMove;
 	bool toJump = false;
-	public static Vector3 JumpForce = new Vector3 (0f, 300f, 0f);
+	public int jumpCounter = 0;
+	public int jumpLimit = 1;
+
+	bool WeaponDrawn = false;
+	bool lockoutDraw = false;
+	bool AimingSights =false;
+	bool lockoutAim = false;
+
+	bool lockout = false;
+
+	//cam
+	Vector3 camDefaultPosition;
+	Vector3 camOverShoulderPosition= new Vector3(1f, .5f, -2.5f);
+
+	float defaultFov = 90f;
+	float sightsFov = 45f;
+
+	//Physics Emulation
+	float mass = 5f;
+	float jumpForce = 5f;
+	Vector3 impact;	
 
 
+	//Gravity
+	public bool usesGravity = true;
+	float gravityCheckOffsetDistance =.2f;
+	float gravityCheckDistance;
+	public bool gravityEnabled;
+	public float currGravity;
+	float gravityTimer;
+	float mGravityTimer;
+	float Interval = 20f;
 
 	// Use this for initialization
 	void Start () {
@@ -33,13 +66,17 @@ public class MovementController : NetworkBehaviour {
 			GrabReferences ();
 			moveSpeed = MoveSpeed.RUN;
 			toggleLock ();
+			GravitySetup ();
 		} else {
 			cam.enabled = false;
 		}
 	}
 
 	void GrabReferences(){
-		rb = GetComponent<Rigidbody> ();
+		controller = GetComponent<CharacterController> ();
+		camDefaultPosition = cam.transform.localPosition;
+		pitch = cam.transform.rotation.eulerAngles.x;
+		yaw = transform.rotation.eulerAngles.y;
 	}
 
 	public override void OnStartLocalPlayer(){
@@ -51,10 +88,15 @@ public class MovementController : NetworkBehaviour {
 	void Update () {
 		toMove = new Vector3 ();
 		if (isLocalPlayer) {
-			CatchInput ();
+			Collisions ();
+			GravityLoop ();
+			if (!lockout) {
+				CatchInput ();
+			}
 			Move ();
 		}
 	}
+
 
 	void CatchInput(){
 		if (Input.GetKey (KeyBinds.Forward))
@@ -66,14 +108,60 @@ public class MovementController : NetworkBehaviour {
 		if (Input.GetKey (KeyBinds.Right))
 			toMove += transform.right;
 		if (Input.GetKeyDown (KeyBinds.Jump))
-			toJump = true;
-		if (Input.GetAxis ("Mouse X") < 0)
-			transform.Rotate (Vector3.up * -sensitivity);
-		if (Input.GetAxis ("Mouse X") > 0)
-			transform.Rotate (Vector3.up * sensitivity);
+			Jump ();
 		if (Input.GetKeyDown (KeyCode.G)) 
 			toggleLock ();
+		if (Input.GetMouseButtonDown(1))
+			ToggleSights();
+		if (Input.GetKeyDown(KeyBinds.ToggleWeapon))
+			ToggleHolster();
 	}
+
+
+	void ToggleSights(){
+		if (!AimingSights && !lockoutAim) {
+			AimingSights = true;
+			lockoutAim = true;
+			StartCoroutine(ShiftFov(sightsFov,.5f));
+		} else if(!lockoutAim) {
+			AimingSights = false;
+			lockoutAim = true;
+			StartCoroutine(ShiftFov(defaultFov,.5f));
+		}
+	}
+
+	private IEnumerator ShiftFov(float finish, float time){
+		float elapsedTime = 0f;
+		while (elapsedTime < time) {
+			cam.fieldOfView = Mathf.Lerp(cam.fieldOfView,finish,(elapsedTime/time));
+			elapsedTime += Time.deltaTime;
+			yield return null;
+		}
+		lockoutAim = false;
+	}
+
+	void ToggleHolster(){
+		if (WeaponDrawn && !lockoutDraw) {
+			WeaponDrawn = false;
+			lockoutDraw = true;
+			StartCoroutine (ShiftPosition (camDefaultPosition, .5f));
+		} else if(!lockoutDraw) {
+			WeaponDrawn = true;
+			lockoutDraw = true;
+			StartCoroutine (ShiftPosition (camOverShoulderPosition, .5f));
+		}
+	}
+
+	private IEnumerator ShiftPosition(Vector3 finish, float time){
+		float elapsedTime = 0f;
+		while (elapsedTime < time) {
+			cam.transform.localPosition = Vector3.Lerp(cam.transform.localPosition,finish,(elapsedTime/time));
+			elapsedTime += Time.deltaTime;
+			yield return null;
+		}
+		lockoutDraw = false;
+	}
+
 
 
 	void toggleLock(){
@@ -86,14 +174,95 @@ public class MovementController : NetworkBehaviour {
 		}
 	}
 
-			void Move(){
-		rb.AddForce (toMove.normalized * (float)moveSpeed * Time.deltaTime);
+	void Move(){
+		controller.Move (toMove.normalized * (float)moveSpeed * Time.deltaTime);
 		if (toJump) {
-			rb.AddForce (JumpForce);
+			AddImpact (transform.up, jumpForce);
 			toJump = false;
 		}
 	}
 
+	void ForceMove(Vector3 vec){
+		controller.Move (vec * Time.deltaTime);
+	}
+
+	void ForceMoveBypass(Vector3 vec){
+		controller.Move (vec * Time.deltaTime);
+	}
+
+	void Jump(){
+		if (IsGrounded()) {
+			toJump = true;
+		} else if (jumpCounter < jumpLimit) {
+			toJump = true;
+			jumpCounter++;
+		}
+
+	}
+
+	public bool IsGrounded(){
+		if (!gravityEnabled) {
+			return true;
+		} else
+			return false;
+	}
+
+	void Collisions(){
+		if (impact.magnitude > .1f) {
+			controller.Move ( (impact));
+		//	lockout = true;
+			impact = Vector3.Lerp (impact, Vector3.zero, 5 * Time.deltaTime);
+		} else {
+		//	lockout = false;
+		}
+	}
+
+	public void AddImpact(Vector3 dir, float force){
+		dir.Normalize ();
+		if (dir.y < 0)
+			dir.y = -dir.y;
+		impact += dir.normalized * force / mass;
+	}
+
+	void GravitySetup(){
+			mGravityTimer = 1 / Interval;
+			gravityCheckDistance = GetComponent<Collider> ().bounds.size.y / 2 + gravityCheckOffsetDistance;
+	}
+
+	private void GravityLoop(){
+		if (usesGravity) {
+			gravityTimer += Time.fixedUnscaledDeltaTime;
+			if (gravityTimer >= mGravityTimer) {
+				gravityTimer -= mGravityTimer;
+				CheckGravity ();
+			}
+			if (gravityEnabled) {
+				currGravity += GRAVITY * Time.deltaTime;
+				ForceMoveBypass (new Vector3 (0f, currGravity, 0f));
+			} else {
+				currGravity = 0f; //reset to base acceleration
+				jumpCounter = 0;
+			}
+		} else {
+			gravityEnabled = false; //in case we change mid game for some reason
+		}
+	}
+
+	private void CheckGravity(){ //TODO literally just doesnt work idfk why
+		RaycastHit hit;
+		//Debug.DrawRay (transform.position, Vector3.down * gravityCheckDistance); 
+		Ray GravityCheckingRay = new Ray (transform.position, transform.up*-1f);
+		Debug.DrawRay (transform.position,transform.up*-1f);
+		if (Physics.Raycast (GravityCheckingRay, out hit, gravityCheckDistance) ) {
+			if (hit.collider.transform.parent != gameObject && hit.collider.transform.gameObject != gameObject) {
+				gravityEnabled = false;
+			} else {
+				gravityEnabled = true;
+			}
+		} else {
+			gravityEnabled = true;
+		}
+	}
 
 
 }

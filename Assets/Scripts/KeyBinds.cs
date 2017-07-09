@@ -11,5 +11,7 @@ public static class KeyBinds {
 
 	public static KeyCode Jump = KeyCode.Space;
 
+	public static KeyCode ToggleWeapon = KeyCode.H;
+
 
 }

@@ -33,23 +33,22 @@ public class LaserPistol : Weapon {
 		if (!canFire || ammo <= 0) {
 			return;
 		}
-
-
-
-
-
-
-	}
+        Debug.DrawRay(transform.position, cam.ScreenPointToRay(Input.mousePosition).direction * maxRange, Color.red, 3f);
+        ammo--;
+    }
 
 	public override void Reload(){
-
-	}
+        //press R
+        if (ammo != maxAmmo && clips > 0)
+        canFire = false;
+        reloadTimer = reloadTime;
+        Debug.Log("Reloading!");
+    }
 
 
 
 
 	// Update is called once per frame
 	void Update () {
-		
 	}
 }

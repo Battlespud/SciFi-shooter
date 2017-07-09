@@ -17,6 +17,7 @@ public enum MoveSpeed{
 public class MovementController : NetworkBehaviour {
 
 	Player player;
+	Weapon weapon;
 
 	const float GRAVITY = -18.8f; //acceleration
 	public float xSensitivity = 1f;
@@ -84,6 +85,7 @@ public class MovementController : NetworkBehaviour {
 		camDefaultPosition = cam.transform.localPosition;
 		pitch = cam.transform.rotation.eulerAngles.x;
 		yaw = transform.rotation.eulerAngles.y;
+		weapon = GetComponentInChildren<Weapon> ();
 	}
 
 	public override void OnStartLocalPlayer(){
@@ -120,6 +122,12 @@ public class MovementController : NetworkBehaviour {
 			toggleLock ();
 		if (Input.GetKeyDown (KeyCode.Escape)) 
 			Unlock ();
+		if (Input.GetMouseButtonDown (0))
+		if (WeaponDrawn) {
+			weapon.Fire ();
+		} else {
+			ToggleHolster ();
+		}
 		if (Input.GetMouseButtonDown(1))
 			ToggleSights();
 		if (Input.GetKey (KeyCode.LeftShift)) {

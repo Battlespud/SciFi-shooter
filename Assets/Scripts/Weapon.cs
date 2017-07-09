@@ -19,6 +19,7 @@ public abstract class Weapon : MonoBehaviour {
 	public bool canFire;
 
 	public float reloadTime;
+    public float reloadTimer;
 
 
 	public abstract void Fire ();

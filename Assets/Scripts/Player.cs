@@ -4,21 +4,17 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Events;
 
-public class Player : NetworkBehaviour{
+public class Player : NetworkBehaviour
+{
 
     [SyncVar] public int HP;
     public int damageAmount;
 
     // Update is called once per frame
-    private void Start()
+    void Update()
     {
-        HP = 100;
-        damageAmount = 3;
-    }
-
-    void Update () {
         Damage(damageAmount);
-	}
+    }
 
     public void Damage(int amount)
     {
@@ -27,9 +23,8 @@ public class Player : NetworkBehaviour{
 
         if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.F))
         {
-            Debug.Log(string.Format("HP was {0}; Applied {1} damage points;", HP, amount));
+            Debug.Log(string.Format("HP was {0}; Applied {1} damage points; HP is {2}", HP, amount, HP - amount));
             HP -= amount;
-            Debug.Log(string.Format("HP is {0}", HP));
         }
 
         if (HP <= 0)

@@ -123,9 +123,19 @@ public class MovementController : NetworkBehaviour {
 		if (Input.GetMouseButtonDown(1))
 			ToggleSights();
 		if (Input.GetKey (KeyCode.LeftShift)) {
-			if(AimingSights)ToggleSights ();
-			if(!AimingSights)moveSpeed = MoveSpeed.RUN;
-		} else {
+			if (AimingSights)
+				ToggleSights ();
+			if (!AimingSights && (player.Stamina > 2 || (player.Stamina > 0 && player.usingStamina))) {
+				moveSpeed = MoveSpeed.RUN;
+				player.usingStamina = true;
+				player.Stamina -= Time.deltaTime;
+			} else {
+				player.usingStamina = false;
+				if (AimingSights) 	moveSpeed = MoveSpeed.AIM;
+				else{	moveSpeed = MoveSpeed.WALK;	}
+			}
+		}else {
+			player.usingStamina = false;
 			if (AimingSights) 	moveSpeed = MoveSpeed.AIM;
 			else{	moveSpeed = MoveSpeed.WALK;	}
 		}
@@ -196,8 +206,12 @@ public class MovementController : NetworkBehaviour {
 	}
 
 	void Unlock(){
-		Cursor.lockState = CursorLockMode.None;
-		Cursor.visible = true;
+		if (Cursor.lockState == CursorLockMode.None) {
+			Cursor.lockState = CursorLockMode.Locked;
+		} else {
+			Cursor.lockState = CursorLockMode.None;
+			Cursor.visible = true;
+		}
 	}
 
 	void Move(){

@@ -165,7 +165,7 @@ public class MovementController : NetworkBehaviour {
 		}
 		if (Input.GetMouseButtonDown(KeyBinds.RightClick))
 			ToggleSights();
-		if (Input.GetKey (KeyBinds.Sprint)) {
+		if (Input.GetKey (KeyBinds.Sprint) && !isCrouching) {
 			if (AimingSights)
 				ToggleSights ();
 			if (!AimingSights && (player.Stamina > 2 || (player.Stamina > 0 && player.usingStamina))) {
@@ -190,13 +190,15 @@ public class MovementController : NetworkBehaviour {
 	void Crouch(){
 		switch (stance) {
 		case(Stance.STAND):{
-				if (moveSpeed == MoveSpeed.RUN && Vector3.Distance(transform.forward, controller.velocity.normalized) < .2f) {
+				if (moveSpeed == MoveSpeed.RUN && Vector3.Distance (transform.forward, controller.velocity.normalized) < .2f) {
 					ChangeStance (Stance.SLIDE);
+				} else {
+					ChangeStance (Stance.CROUCH);
 				}
 				break;
 			}
 		case(Stance.CROUCH):{
-
+				ChangeStance (Stance.STAND);
 				break;
 			}
 		case(Stance.SLIDE):{
@@ -212,6 +214,7 @@ public class MovementController : NetworkBehaviour {
 	{
 		switch (toStance) {
 		case(Stance.STAND):{
+				stance = Stance.STAND;
 				moveSpeed = MoveSpeed.WALK;
 				isCrouching = false;
 				lockout = false;
@@ -219,6 +222,7 @@ public class MovementController : NetworkBehaviour {
 				break;
 			}
 		case(Stance.CROUCH):{
+				stance = Stance.CROUCH;
 				moveSpeed = MoveSpeed.AIM;
 				isCrouching = true;
 				transform.localScale = new Vector3 (1f, 1.5f, 1f);
@@ -226,8 +230,9 @@ public class MovementController : NetworkBehaviour {
 				break;
 			}
 		case(Stance.SLIDE):{
+				stance = Stance.SLIDE;
 				Debug.Log("Sliding!");
-				isCrouching = false;
+				isCrouching = true;
 				lockout = true;
 				transform.localScale = new Vector3(1f, 1f, 1f);
 				StartSlide ();

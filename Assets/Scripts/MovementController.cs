@@ -13,11 +13,19 @@ public enum MoveSpeed{
 	RUN = 12,
 };
 
+public enum Stance{
+	CROUCH = 1,
+	SLIDE = 2,
+	STAND = 3
+};
+
 
 public class MovementController : NetworkBehaviour {
 
 	Player player;
 	Weapon weapon;
+	Stance stance = Stance.STAND;
+	bool isCrouching;
 
 	const float GRAVITY = -18.8f; //acceleration
 	public float xSensitivity = 1f;
@@ -100,9 +108,7 @@ public class MovementController : NetworkBehaviour {
 		if (isLocalPlayer) {
 			Collisions ();
 			GravityLoop ();
-			if (!lockout) {
-				CatchInput ();
-			}
+			CatchInput ();
 			Move ();
 		}
 	}
@@ -112,6 +118,7 @@ public class MovementController : NetworkBehaviour {
 	}
 
 	void CatchInput(){
+		if (!lockout)
 		MovementInput ();
 		ActionsInput ();
 		SystemInput ();
@@ -120,6 +127,7 @@ public class MovementController : NetworkBehaviour {
 	}
 
 	void MovementInput(){
+		
 		if (Input.GetKey (KeyBinds.Forward))
 			toMove += transform.forward;
 		if (Input.GetKey (KeyBinds.Back))
@@ -128,13 +136,15 @@ public class MovementController : NetworkBehaviour {
 			toMove += transform.right*-1;
 		if (Input.GetKey (KeyBinds.Right))
 			toMove += transform.right;
+
 	}
 
 	void ActionsInput(){
 		if (Input.GetKeyDown (KeyBinds.Jump))
 			Jump ();
-		if (Input.GetKeyDown (KeyBinds.Crouch)) 
-			weapon.Reload ();
+		if (Input.GetKeyDown (KeyBinds.Crouch)) {
+			Crouch ();
+		}
 	}
 
 	void SystemInput(){
@@ -174,6 +184,78 @@ public class MovementController : NetworkBehaviour {
 		}
 		if (Input.GetKeyDown(KeyBinds.ToggleWeapon))
 			ToggleHolster();
+	}
+
+
+	void Crouch(){
+		switch (stance) {
+		case(Stance.STAND):{
+				if (moveSpeed == MoveSpeed.RUN && Vector3.Distance(transform.forward, controller.velocity.normalized) < .2f) {
+					ChangeStance (Stance.SLIDE);
+				}
+				break;
+			}
+		case(Stance.CROUCH):{
+
+				break;
+			}
+		case(Stance.SLIDE):{
+
+				break;
+			}
+
+		}
+
+	}
+
+	void ChangeStance(Stance toStance)
+	{
+		switch (toStance) {
+		case(Stance.STAND):{
+				moveSpeed = MoveSpeed.WALK;
+				isCrouching = false;
+				lockout = false;
+				transform.localScale = new Vector3 (1f, 2f, 1f);
+				break;
+			}
+		case(Stance.CROUCH):{
+				moveSpeed = MoveSpeed.AIM;
+				isCrouching = true;
+				transform.localScale = new Vector3 (1f, 1.5f, 1f);
+				lockout =   false;
+				break;
+			}
+		case(Stance.SLIDE):{
+				Debug.Log("Sliding!");
+				isCrouching = false;
+				lockout = true;
+				transform.localScale = new Vector3(1f, 1f, 1f);
+				StartSlide ();
+				break;
+			}
+
+		}
+
+	}
+
+	void StartSlide(){
+		transform.localScale = new Vector3(1f, 1f, 1f);
+		StartCoroutine (SlideHandler());
+	}
+
+	private IEnumerator SlideHandler(){
+		float elapsedTime = 0f;
+		gravityEnabled = true;
+		float slideSpeed=controller.velocity.magnitude*1.4f;
+		Debug.Log (slideSpeed);
+		Vector3 directionVector = transform.forward;//transform.TransformDirection(transform.forward);
+		while (slideSpeed > (int)MoveSpeed.AIM) {
+			gravityEnabled = true;
+			controller.Move(directionVector.normalized*slideSpeed*Time.deltaTime);
+			slideSpeed = Mathf.Lerp (slideSpeed, 0f, .01f);
+			yield return null;
+		}
+		ChangeStance (Stance.STAND);
 	}
 
 	void ToggleSights(){
@@ -324,7 +406,7 @@ public class MovementController : NetworkBehaviour {
 		RaycastHit hit;
 		//Debug.DrawRay (transform.position, Vector3.down * gravityCheckDistance); 
 		Ray GravityCheckingRay = new Ray (transform.position, transform.up*-1f);
-		Debug.DrawRay (transform.position,transform.up*-1f);
+		Debug.DrawRay (transform.position,transform.up*-1f,Color.green,2f);
 		if (Physics.Raycast (GravityCheckingRay, out hit, gravityCheckDistance) ) {
 			if (hit.collider.transform.parent != gameObject && hit.collider.transform.gameObject != gameObject) {
 				gravityEnabled = false;

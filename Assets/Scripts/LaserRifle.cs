@@ -50,7 +50,7 @@ public class LaserRifle : Weapon {
 		if (!canFire || ammo <= 0) {
 			return;
 		}
-		Debug.DrawRay (muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction * maxRange, Color.red, 3f);
+	//	Debug.DrawRay (muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction * maxRange, Color.red, 3f);
 		RaycastHit hit;
 		Ray firingRay = new Ray (muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction);
 		ammo--;
@@ -80,9 +80,9 @@ public class LaserRifle : Weapon {
 			return;
 		}
 		bounces++;
-		Debug.Log ("Bounce laser");
+	//	Debug.Log ("Bounce laser");
 		//StartCoroutine (LineRendererHandler (hit.point,Vector3.Reflect(firingRay.direction,hit.normal)*maxRange));
-		Debug.DrawRay (hit.transform.position, Vector3.Reflect(firingRay.direction,hit.normal)*maxRange, Color.red, 3f);
+	//	Debug.DrawRay (hit.transform.position, Vector3.Reflect(firingRay.direction,hit.normal)*maxRange, Color.red, 3f);
 		Ray newFiringRay = new Ray(hit.transform.position, Vector3.Reflect(firingRay.direction,hit.normal));
 		RaycastHit newHit;
 		if (Physics.Raycast (newFiringRay, out newHit, maxRange)) {
@@ -103,16 +103,17 @@ public class LaserRifle : Weapon {
 			StartCoroutine (LineRendererHandler (hit.point, Vector3.Reflect (firingRay.direction, hit.normal) * maxRange));
 
 		}
+		Debug.Log (bounces);
 	}
 
 	private IEnumerator LineRendererHandler(Vector3 endPos){
-		Debug.Log ("making laser");
+		//Debug.Log ("making laser");
 		GameObject renderer = Instantiate (lrPrefab);
 		LineRenderer lr = renderer.GetComponent<LineRenderer> ();
 		lr.startColor = Color.green;
 		lr.endColor = Color.green;
 		renderer.transform.position = muzzle.transform.position;
-		float time = 5f;
+		float time = .05f;
 		float elapsedTime = 0f;
 		lr.enabled = true;
 		lr.SetPositions(new Vector3[2]{muzzle.transform.position,endPos});
@@ -125,12 +126,12 @@ public class LaserRifle : Weapon {
 	}
 
 	private IEnumerator LineRendererHandler(Vector3 startPos, Vector3 endPos){
-		Debug.Log ("Bounce laser");
+	//	Debug.Log ("Bounce laser");
 		GameObject renderer = Instantiate (lrPrefab);
 		LineRenderer lr = renderer.GetComponent<LineRenderer> ();
 		lr.startColor = Color.red;
 		lr.endColor = Color.red;
-		float time = 5f;
+		float time = .05f;
 		float elapsedTime = 0f;
 		lr.enabled = true;
 		lr.SetPositions(new Vector3[2]{startPos,endPos});
@@ -145,7 +146,7 @@ public class LaserRifle : Weapon {
 		if(ammo != maxAmmo && clips > 0)
 		canFire = false;
 		reloadTimer = reloadTime;
-		Debug.Log ("Reloading!");
+	//	Debug.Log ("Reloading!");
 	}
 
 
@@ -158,7 +159,7 @@ public class LaserRifle : Weapon {
 				reloadTimer -= Time.deltaTime;
 			}
 			else if (reloadTimer <= 0) {
-				Debug.Log ("Loaded!");
+			//	Debug.Log ("Loaded!");
 				ammo = maxAmmo;
 				canFire = true;
 				clips -= 1;

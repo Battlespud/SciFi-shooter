@@ -73,7 +73,7 @@ public class MovementController : NetworkBehaviour {
 			Cursor.SetCursor (cursor, new Vector2(16,16), CursorMode.ForceSoftware);
 			GrabReferences ();
 			moveSpeed = MoveSpeed.WALK;
-			toggleLock ();
+			ToggleCursorVisible ();
 			GravitySetup ();
 		} else {
 			cam.enabled = false;
@@ -112,6 +112,14 @@ public class MovementController : NetworkBehaviour {
 	}
 
 	void CatchInput(){
+		MovementInput ();
+		ActionsInput ();
+		SystemInput ();
+		WeaponInput ();
+
+	}
+
+	void MovementInput(){
 		if (Input.GetKey (KeyBinds.Forward))
 			toMove += transform.forward;
 		if (Input.GetKey (KeyBinds.Back))
@@ -120,24 +128,34 @@ public class MovementController : NetworkBehaviour {
 			toMove += transform.right*-1;
 		if (Input.GetKey (KeyBinds.Right))
 			toMove += transform.right;
+	}
+
+	void ActionsInput(){
 		if (Input.GetKeyDown (KeyBinds.Jump))
 			Jump ();
+		if (Input.GetKeyDown (KeyBinds.Crouch)) 
+			weapon.Reload ();
+	}
+
+	void SystemInput(){
 		if (Input.GetKeyDown (KeyCode.G)) 
-			toggleLock ();
+			ToggleCursorVisible ();
 		if (Input.GetKeyDown (KeyCode.Escape)) 
 			Unlock ();
-		if (Input.GetKeyDown (KeyCode.R)) 
-			
+	}
+
+	void WeaponInput(){
+		if (Input.GetKeyDown (KeyBinds.Reload)) 
 			weapon.Reload ();
-		if (Input.GetMouseButtonDown (0))
+		if (Input.GetMouseButtonDown (KeyBinds.LeftClick))
 		if (WeaponDrawn) {
 			weapon.Fire ();
 		} else {
 			ToggleHolster ();
 		}
-		if (Input.GetMouseButtonDown(1))
+		if (Input.GetMouseButtonDown(KeyBinds.RightClick))
 			ToggleSights();
-		if (Input.GetKey (KeyCode.LeftShift)) {
+		if (Input.GetKey (KeyBinds.Sprint)) {
 			if (AimingSights)
 				ToggleSights ();
 			if (!AimingSights && (player.Stamina > 2 || (player.Stamina > 0 && player.usingStamina))) {
@@ -157,7 +175,6 @@ public class MovementController : NetworkBehaviour {
 		if (Input.GetKeyDown(KeyBinds.ToggleWeapon))
 			ToggleHolster();
 	}
-
 
 	void ToggleSights(){
 		if (!AimingSights && !lockoutAim && (WeaponDrawn || !lockoutDraw)) {
@@ -187,12 +204,12 @@ public class MovementController : NetworkBehaviour {
 	void ToggleHolster(){
 		if (WeaponDrawn && !lockoutDraw) {
 			WeaponDrawn = false;
-			toggleLock ();
+			ToggleCursorVisible ();
 			lockoutDraw = true;
 			StartCoroutine (ShiftPosition (camDefaultPosition, .5f));
 		} else if(!lockoutDraw) {
 			WeaponDrawn = true;
-			toggleLock ();
+			ToggleCursorVisible ();
 			lockoutDraw = true;
 			StartCoroutine (ShiftPosition (camOverShoulderPosition, .5f));
 		}
@@ -210,7 +227,7 @@ public class MovementController : NetworkBehaviour {
 
 
 
-	void toggleLock(){
+	void ToggleCursorVisible(){
 		if (Cursor.visible) {
 			Cursor.visible = false;
 			Cursor.lockState = CursorLockMode.Locked;

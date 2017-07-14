@@ -10,6 +10,7 @@ public class Player : NetworkBehaviour
 
 
 	public Text healthText;
+	public int MaxHP = 100;
     [SyncVar] public int HP;
 	//in seconds
 	[SyncVar] public float MaxStamina = 5f;
@@ -25,6 +26,7 @@ public class Player : NetworkBehaviour
 	void Start(){
 		if (isLocalPlayer) {
 			Stamina = MaxStamina;
+			HP = MaxHP;
 		}
 	}
 
@@ -35,7 +37,12 @@ public class Player : NetworkBehaviour
 			RegenStamina ();
 
 		}
-		healthText.text = HP.ToString();
+		if (HP < MaxHP) {
+			healthText.text = HP.ToString ();
+		}
+		else {
+			healthText.text = "";
+		}
     }
 
 	public void DoDamageTest(int i){
@@ -52,7 +59,7 @@ public class Player : NetworkBehaviour
         if (!isServer)
             return;
 
-        if (Input.GetKeyDown(KeyCode.F))
+        if (Input.GetKeyDown(KeyCode.Z))
         {
             Debug.Log(string.Format("HP was {0}; Applied {1} damage points; HP is {2}", HP, amount, HP - amount));
             HP -= amount;

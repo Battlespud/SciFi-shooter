@@ -90,6 +90,7 @@ public abstract class Weapon : MonoBehaviour {
 				clips -= 1;
 			}
 		}
+		gameObject.transform.rotation = Quaternion.LookRotation (cam.ScreenPointToRay (Input.mousePosition).direction);
 		AmmoText.text = ammo.ToString();
 	}
 }

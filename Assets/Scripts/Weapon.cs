@@ -6,6 +6,9 @@ using UnityEngine.UI;
 
 public abstract class Weapon : MonoBehaviour {
 
+	//Rotation
+	public GameObject Pivot;
+
 	//Sound
 	public AudioClip FireSound;
 	public AudioClip ReloadSound;
@@ -19,8 +22,9 @@ public abstract class Weapon : MonoBehaviour {
 
 
 	public virtual void LoadReferences(){
-		movementController = GetComponentInParent<MovementController> ();
+		movementController = transform.parent.GetComponentInParent<MovementController> ();
 		cam = Camera.main;
+		Pivot = gameObject.transform.parent.gameObject;
 
 		//Light
 		MuzzleFlash = GetComponentInChildren<Light> ();
@@ -90,7 +94,12 @@ public abstract class Weapon : MonoBehaviour {
 				clips -= 1;
 			}
 		}
-		gameObject.transform.rotation = Quaternion.LookRotation (cam.ScreenPointToRay (Input.mousePosition).direction);
+		try{
+		Pivot.transform.rotation = Quaternion.LookRotation (cam.ScreenPointToRay (Input.mousePosition).direction);
+		}
+		catch{
+			//I literally dont care. it'll work.
+		}
 		AmmoText.text = ammo.ToString();
 	}
 }

@@ -5,43 +5,34 @@ using UnityEngine.UI;
 
 public class LaserRifle : Weapon {
 
-	const float LaserTrail = .09f;
+	const float LaserTrail = .075f;
 
-	public AudioClip LaserSound;
-	public AudioSource FiringSound;
+
+
 	public GameObject lrPrefab;
 	public GameObject muzzle;
 
-	Light MuzzleFlash;
-
-	MovementController mc;
-
-	float maxRange = 500f;
 
 	//sanity check, prevents infinite loop
-	int maxBounces = 3;
+	int maxBounces = 18;
 	int bounces = 0;
 
 
-	public Text text;
-
 	// Use this for initialization
 	void Start () {
-		cam = Camera.main;
+		name = "LaserRifle";
+		maxRange = 250;
 		damage = 20;
-		maxAmmo = 12;
+		maxAmmo = 18;
 		ammo = maxAmmo;
 		maxClips = 6;
 		clips = maxClips;
 		accuracy = 1f;
-		cooldown = .25f;
+		cooldown = .15f;
 		reloadTime = 1f;
 		canFire = true;
-		mc = GetComponentInParent<MovementController> ();
-		MuzzleFlash = GetComponentInChildren<Light> ();
-		MuzzleFlash.enabled = false;
-		FiringSound=GetComponent<AudioSource> ();
-		LaserSound = Resources.Load < AudioClip> ("LaserSound");
+
+		LoadReferences ();
 	}
 
 	public override void AimDownSights ()
@@ -49,6 +40,7 @@ public class LaserRifle : Weapon {
 		throw new System.NotImplementedException ();
 	}
 
+	#region shooting
 	public override void Fire(){
 		bounces = 0;
 		CmdFire ();
@@ -62,10 +54,10 @@ public class LaserRifle : Weapon {
 		RaycastHit hit;
 		Ray firingRay = new Ray (muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction);
 		ammo--;
-		FiringSound.PlayOneShot (LaserSound);
+		WeaponSoundSource.PlayOneShot (FireSound);
 		if (Physics.Raycast (firingRay, out hit, maxRange)) {
 			if (hit.collider.gameObject.GetComponent<Player> ()) {
-				mc.CmdDamage (damage, hit.collider.gameObject.GetComponent<Player> ());
+				movementController.CmdDamage (damage, hit.collider.gameObject.GetComponent<Player> ());
 				StartCoroutine (LineRendererHandlerFirstShot (hit.point));
 			} else {
 				if (hit.point != null) {
@@ -93,7 +85,7 @@ public class LaserRifle : Weapon {
 		RaycastHit newHit;
 		if (Physics.Raycast (newFiringRay, out newHit, maxRange)) {
 			if (newHit.collider.gameObject.GetComponent<Player> ()) {
-				mc.CmdDamage (damage, newHit.collider.gameObject.GetComponent<Player> ());
+				movementController.CmdDamage (damage, newHit.collider.gameObject.GetComponent<Player> ());
 				StartCoroutine (LineRendererHandler (hit.point, newHit.point));
 			} else {			//not player
 				if (newHit.point != null) {
@@ -111,7 +103,7 @@ public class LaserRifle : Weapon {
 		}
 		Debug.Log (bounces);
 	}
-
+	#region Coroutines
 	private IEnumerator LineRendererHandlerFirstShot(Vector3 endPos){
 		MuzzleFlash.enabled = true;
 		GameObject renderer = Instantiate (lrPrefab);
@@ -148,30 +140,7 @@ public class LaserRifle : Weapon {
 		}
 		Destroy (renderer);
 	}
+	#endregion
+	#endregion
 
-	public override void Reload(){
-		if(ammo != maxAmmo && clips > 0)
-		canFire = false;
-		reloadTimer = reloadTime;
-	//	Debug.Log ("Reloading!");
-	}
-
-
-
-
-	// Update is called once per frame
-	void Update () {
-		if (!canFire) {
-			if (reloadTimer > 0) {
-				reloadTimer -= Time.deltaTime;
-			}
-			else if (reloadTimer <= 0) {
-			//	Debug.Log ("Loaded!");
-				ammo = maxAmmo;
-				canFire = true;
-				clips -= 1;
-			}
-		}
-		text.text = ammo.ToString();
-	}
 }

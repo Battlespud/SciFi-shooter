@@ -22,6 +22,7 @@ public enum Stance{
 
 public class MovementController : NetworkBehaviour {
 
+	AudioListener Listener;
 	Player player;
 	Weapon weapon;
 	Stance stance = Stance.STAND;
@@ -77,6 +78,7 @@ public class MovementController : NetworkBehaviour {
 	// Use this for initialization
 	void Start () {
 		if (isLocalPlayer) {
+			Listener = GetComponent<AudioListener> ();
 			player = GetComponent<Player> ();
 			Cursor.SetCursor (cursor, new Vector2(16,16), CursorMode.ForceSoftware);
 			GrabReferences ();

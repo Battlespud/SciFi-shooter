@@ -15,7 +15,7 @@ public class Player : NetworkBehaviour
 	[SyncVar] public float MaxStamina = 5f;
 	[SyncVar] public float Stamina = 5f;
 	//in seconds, how long to fill bar
-	float staminaRegenRate = 12f;
+	float staminaRegenRate = 8f;
 	float delay = 1.5f;
 	float delayCounter = 0f;
 	public bool usingStamina = false;
@@ -23,6 +23,9 @@ public class Player : NetworkBehaviour
 
 
 	void Start(){
+		if (isLocalPlayer) {
+			Stamina = MaxStamina;
+		}
 	}
 
     // Update is called once per frame

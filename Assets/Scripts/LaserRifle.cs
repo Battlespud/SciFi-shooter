@@ -5,14 +5,18 @@ using UnityEngine.UI;
 
 public class LaserRifle : Weapon {
 
+	const float LaserTrail = .09f;
 
-
+	public AudioClip LaserSound;
+	public AudioSource FiringSound;
 	public GameObject lrPrefab;
 	public GameObject muzzle;
 
+	Light MuzzleFlash;
+
 	MovementController mc;
 
-	float maxRange = 50f;
+	float maxRange = 500f;
 
 	//sanity check, prevents infinite loop
 	int maxBounces = 3;
@@ -34,6 +38,10 @@ public class LaserRifle : Weapon {
 		reloadTime = 1f;
 		canFire = true;
 		mc = GetComponentInParent<MovementController> ();
+		MuzzleFlash = GetComponentInChildren<Light> ();
+		MuzzleFlash.enabled = false;
+		FiringSound=GetComponent<AudioSource> ();
+		LaserSound = Resources.Load < AudioClip> ("LaserSound");
 	}
 
 	public override void AimDownSights ()
@@ -54,23 +62,21 @@ public class LaserRifle : Weapon {
 		RaycastHit hit;
 		Ray firingRay = new Ray (muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction);
 		ammo--;
-		StartCoroutine (LineRendererHandler (muzzle.transform.position + (cam.ScreenPointToRay (Input.mousePosition).direction * maxRange)));
-
-
+		FiringSound.PlayOneShot (LaserSound);
 		if (Physics.Raycast (firingRay, out hit, maxRange)) {
 			if (hit.collider.gameObject.GetComponent<Player> ()) {
 				mc.CmdDamage (damage, hit.collider.gameObject.GetComponent<Player> ());
-				StartCoroutine (LineRendererHandler (hit.point));
+				StartCoroutine (LineRendererHandlerFirstShot (hit.point));
 			} else {
 				if (hit.point != null) {
-					StartCoroutine (LineRendererHandler (hit.point));
+					StartCoroutine (LineRendererHandlerFirstShot (hit.point));
 					if(hit.collider.gameObject.CompareTag("Reflective")){
 						BounceShot (hit, firingRay);
 					}
 				}
 			}
 		} else {
-			StartCoroutine (LineRendererHandler (muzzle.transform.position + (cam.ScreenPointToRay (Input.mousePosition).direction * maxRange)));
+			StartCoroutine (LineRendererHandlerFirstShot (muzzle.transform.position + (cam.ScreenPointToRay (Input.mousePosition).direction * maxRange)));
 		}
 
 	}
@@ -91,7 +97,7 @@ public class LaserRifle : Weapon {
 				StartCoroutine (LineRendererHandler (hit.point, newHit.point));
 			} else {			//not player
 				if (newHit.point != null) {
-					StartCoroutine (LineRendererHandler (newHit.point));
+					StartCoroutine (LineRendererHandler (hit.point,newHit.point));
 					if (hit.collider.gameObject.CompareTag ("Reflective")) {
 						BounceShot (newHit, newFiringRay);
 					}
@@ -106,32 +112,33 @@ public class LaserRifle : Weapon {
 		Debug.Log (bounces);
 	}
 
-	private IEnumerator LineRendererHandler(Vector3 endPos){
-		//Debug.Log ("making laser");
+	private IEnumerator LineRendererHandlerFirstShot(Vector3 endPos){
+		MuzzleFlash.enabled = true;
 		GameObject renderer = Instantiate (lrPrefab);
 		LineRenderer lr = renderer.GetComponent<LineRenderer> ();
-		lr.startColor = Color.green;
-		lr.endColor = Color.green;
+		MuzzleFlash.color = Color.cyan;
+		lr.startColor = Color.cyan;
+		lr.endColor = Color.cyan;
 		renderer.transform.position = muzzle.transform.position;
-		float time = .05f;
+		float time = LaserTrail;
 		float elapsedTime = 0f;
 		lr.enabled = true;
 		lr.SetPositions(new Vector3[2]{muzzle.transform.position,endPos});
-
 		while (elapsedTime < time) {
 			elapsedTime += Time.deltaTime;
 			yield return null;
 		}
+		MuzzleFlash.enabled = false;
 		Destroy (renderer);
 	}
 
 	private IEnumerator LineRendererHandler(Vector3 startPos, Vector3 endPos){
-	//	Debug.Log ("Bounce laser");
+		Debug.Log ("Bounce laser");
 		GameObject renderer = Instantiate (lrPrefab);
 		LineRenderer lr = renderer.GetComponent<LineRenderer> ();
 		lr.startColor = Color.red;
 		lr.endColor = Color.red;
-		float time = .05f;
+		float time = LaserTrail;
 		float elapsedTime = 0f;
 		lr.enabled = true;
 		lr.SetPositions(new Vector3[2]{startPos,endPos});

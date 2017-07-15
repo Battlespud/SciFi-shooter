@@ -105,7 +105,7 @@ public class MovementController : NetworkBehaviour {
 
 	//Gravity
 	public bool usesGravity = true;
-	float gravityCheckOffsetDistance =.51f;
+	float gravityCheckOffsetDistance = .11f;
 	float gravityCheckDistance;
 	public bool gravityEnabled;
 	public float currGravity;
@@ -220,10 +220,20 @@ public class MovementController : NetworkBehaviour {
 		if (Input.GetKeyDown (KeyBinds.Reload)) 
 			weapon.Reload ();
 		if (Input.GetMouseButtonDown (KeyBinds.LeftClick))
-		if (WeaponDrawn) {
-			weapon.Fire ();
-		} else {
-			ToggleHolster ();
+		if (!weapon.automatic) {
+			if (WeaponDrawn && !weapon.automatic) {
+				weapon.Fire ();
+			} else {
+				ToggleHolster ();
+			}
+		}
+		if (Input.GetMouseButton (KeyBinds.LeftClick))
+		if (weapon.automatic) {
+			if (WeaponDrawn) {
+				weapon.Fire ();
+			} else {
+				ToggleHolster ();
+			}
 		}
 		if (Input.GetMouseButtonDown(KeyBinds.RightClick))
 			ToggleSights();
@@ -310,17 +320,19 @@ public class MovementController : NetworkBehaviour {
 	}
 
 	private IEnumerator SlideHandler(){
+		ani.SetTrigger ("SlideTrigger");
 		gravityEnabled = true;
-		float slideSpeed = Velocity.magnitude*1.4f;
+		float slideSpeed = Velocity.magnitude*1.8f;
 		Debug.Log (slideSpeed);
 		Vector3 directionVector = Velocity.normalized;//transform.TransformDirection(transform.forward);
 		while (slideSpeed > 3) {
 			gravityEnabled = true;
 			controller.Move(directionVector.normalized*slideSpeed*Time.deltaTime);
-			slideSpeed = Mathf.Lerp (slideSpeed, 0f, .015f);
+			slideSpeed = Mathf.Lerp (slideSpeed, 0f, .012f);
 			yield return null;
 		}
 		Debug.Log ("End slide");
+		ani.ResetTrigger ("SlideTrigger");
 		ChangeStance (Stance.STAND);
 	}
 
@@ -440,7 +452,7 @@ public class MovementController : NetworkBehaviour {
 
 	void GravitySetup(){
 			mGravityTimer = 1 / Interval;
-			gravityCheckDistance = GetComponent<Collider> ().bounds.size.y / 2 + gravityCheckOffsetDistance;
+		gravityCheckDistance = GetComponent<Collider> ().bounds.size.y / 2 + gravityCheckOffsetDistance;
 	}
 
 	private void GravityLoop(){
@@ -478,7 +490,6 @@ public class MovementController : NetworkBehaviour {
 
 
 	void HandleAnimation(){
-		ani.SetInteger("Stance", (int)stance);
 		if (Velocity.normalized.z != 0f) {
 			ani.SetBool ("running", true);
 		} else {

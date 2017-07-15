@@ -72,10 +72,13 @@ public abstract class Weapon : MonoBehaviour {
 	public int maxClips;
 	public float accuracy;
 
+	public bool automatic = true;
+
 	//between shots
 	public float cooldownTimer;
 	public float cooldown;
 	public bool canFire;
+
 
 	public float reloadTime;
     public float reloadTimer;

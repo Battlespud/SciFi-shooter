@@ -8,18 +8,18 @@ public class Activator : MonoBehaviour {
 	//used to activate objects implementing IActivate
 	Ray activationRay;
 	public const float ActivationDistance = 1f;
-	Text ActivationToolTipText;
+	public Text ActivationToolTipText;
 	string emptyString;
 
 	// Use this for initialization
 	void Start () {
-		ActivationToolTipText = GetComponentInChildren<Text> ();
 		emptyString = ("");
 	}
 	// Update is called once per frame
 	void Update () {
 //		activationRay = new Ray (transform.position, transform.forward);
 			RaycastHit hit;
+		try{
 		if (Physics.Raycast (transform.position, transform.forward, out hit, ActivationDistance)) {
 			if (hit.collider.GetComponent<IActivate> () != null) {
 				IActivate active = hit.collider.GetComponent<IActivate> ();
@@ -35,4 +35,8 @@ public class Activator : MonoBehaviour {
 			ActivationToolTipText.text = emptyString;
 		}
 	}
+	catch{
+		//idc
+	}
+}
 }

@@ -14,7 +14,7 @@ public class LaserRifle : Weapon {
 
 
 	//sanity check, prevents infinite loop
-	int maxBounces = 18;
+	int maxBounces = 6;
 	int bounces = 0;
 
 
@@ -28,8 +28,8 @@ public class LaserRifle : Weapon {
 		maxClips = 6;
 		clips = maxClips;
 		accuracy = 1f;
-		cooldown = .15f;
-		reloadTime = 1f;
+		cooldown = .35f;
+		reloadTime = .85f;
 		canFire = true;
 
 		LoadReferences ();
@@ -125,7 +125,7 @@ public class LaserRifle : Weapon {
 	}
 
 	private IEnumerator LineRendererHandler(Vector3 startPos, Vector3 endPos){
-		Debug.Log ("Bounce laser");
+		//Debug.Log ("Bounce laser");
 		GameObject renderer = Instantiate (lrPrefab);
 		LineRenderer lr = renderer.GetComponent<LineRenderer> ();
 		lr.startColor = Color.red;

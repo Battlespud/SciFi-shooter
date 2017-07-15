@@ -43,12 +43,11 @@ public abstract class Weapon : MonoBehaviour {
 		if(ammo != maxAmmo && clips > 0)
 			canFire = false;
 		reloadTimer = reloadTime;
-		//	Debug.Log ("Reloading!");
 	}
 
 	public virtual void Fire(){
 		if (ammo > 0) {
-			WeaponSoundSource.PlayOneShot (FireSound);
+			try{WeaponSoundSource.PlayOneShot (FireSound);}catch{Debug.Log ("This weapon needs a firing sound. " + name);}
 			ammo--;
 		}
 		Debug.Log ("You need to write a custom fire method for this weapon still");
@@ -89,6 +88,7 @@ public abstract class Weapon : MonoBehaviour {
 			}
 			else if (reloadTimer <= 0) {
 				//	Debug.Log ("Loaded!");
+				try{WeaponSoundSource.PlayOneShot(ReloadSound);}catch{Debug.Log("This weapon needs a reload sound. " + name);}
 				ammo = maxAmmo;
 				canFire = true;
 				clips -= 1;

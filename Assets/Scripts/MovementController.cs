@@ -8,20 +8,34 @@ using UnityEngine.Networking;
 
 
 public enum MoveSpeed{
-	AIM = 4,
-	WALK = 6,
-	RUN = 12,
+	AIM = 0,
+	WALK = 1,
+	RUN = 2,
+	SPRINT = 3
 };
 
+/*
+public enum MoveSpeed{
+	AIM = 4,
+	WALK = 6,
+	RUN = 8,
+	SPRINT = 14
+};
+
+*/
 public enum Stance{
-	CROUCH = 1,
-	SLIDE = 2,
-	STAND = 3
+	CROUCH = 0,
+	SLIDE = 1,
+	STAND = 2
 };
 
 
 public class MovementController : NetworkBehaviour {
 
+	public static float[] SpeedStanceModifiers = new float[4]{ 1f, 1.5f, 2f, 3.5f };
+	public static float[] SpeedStanceAccelerationModifiers = new float[4]{ .75f, 1f, 1.75f, 2f };
+
+	public Animator ani;
 	AudioListener Listener;
 	Player player;
 	Weapon weapon;
@@ -43,6 +57,27 @@ public class MovementController : NetworkBehaviour {
 	public Vector3 toMove;
 	bool toJump = false;
 	public int jumpCounter = 0;
+
+
+
+
+
+	//AccelerationBasedMovement
+	public GameObject wayfinder;
+	float xAcceleration = 5f;
+	float zStartAcceleration = 3.5f; //starting acceleration
+	float zAcceleration = 2f;//once we get moving we dont accelerate as fast
+	float zVelocitySwitch = 4f;
+
+	float MaxVelocityX = 4f;
+	float MaxVelocityZ = 4f;
+	float backwardsModifiersMaxSpeed = .4f;
+
+	Vector3 Acceleration;
+	Vector3 Velocity;
+
+
+
 	public int jumpLimit = 1;
 
 	bool WeaponDrawn = false;
@@ -51,6 +86,9 @@ public class MovementController : NetworkBehaviour {
 	bool lockoutAim = false;
 
 	bool lockout = false;
+
+	//Animation
+	int jumpHash = Animator.StringToHash("Jump");
 
 	//cam
 	Vector3 camDefaultPosition;
@@ -67,7 +105,7 @@ public class MovementController : NetworkBehaviour {
 
 	//Gravity
 	public bool usesGravity = true;
-	float gravityCheckOffsetDistance =.2f;
+	float gravityCheckOffsetDistance =.51f;
 	float gravityCheckDistance;
 	public bool gravityEnabled;
 	public float currGravity;
@@ -78,6 +116,7 @@ public class MovementController : NetworkBehaviour {
 	// Use this for initialization
 	void Start () {
 		if (isLocalPlayer) {
+			stance = Stance.STAND;
 			Listener = GetComponent<AudioListener> ();
 			player = GetComponent<Player> ();
 			Cursor.SetCursor (cursor, new Vector2(16,16), CursorMode.ForceSoftware);
@@ -97,7 +136,9 @@ public class MovementController : NetworkBehaviour {
 		pitch = cam.transform.rotation.eulerAngles.x;
 		yaw = transform.rotation.eulerAngles.y;
 		weapon = GetComponentInChildren<Weapon> ();
+
 	}
+
 
 	public override void OnStartLocalPlayer(){
 		GetComponent<MeshRenderer>().material.color = Color.green;
@@ -111,6 +152,8 @@ public class MovementController : NetworkBehaviour {
 			Collisions ();
 			GravityLoop ();
 			CatchInput ();
+			HandleAnimation ();
+			GenerateVelocityVector ();
 			Move ();
 		}
 	}
@@ -130,14 +173,31 @@ public class MovementController : NetworkBehaviour {
 
 	void MovementInput(){
 		
-		if (Input.GetKey (KeyBinds.Forward))
-			toMove += transform.forward;
-		if (Input.GetKey (KeyBinds.Back))
-			toMove += transform.forward*-1;
-		if (Input.GetKey (KeyBinds.Left))
-			toMove += transform.right*-1;
-		if (Input.GetKey (KeyBinds.Right))
-			toMove += transform.right;
+		if (Input.GetKey (KeyBinds.Forward)){
+			toMove.z += 1;
+			if(wayfinder.transform.InverseTransformVector(Velocity).z < zVelocitySwitch){
+				Acceleration.z += zStartAcceleration*SpeedStanceAccelerationModifiers[(int)moveSpeed]*Time.deltaTime;
+			}
+			else{
+				Acceleration.z += zAcceleration*SpeedStanceAccelerationModifiers[(int)moveSpeed]*Time.deltaTime;
+			}
+	}
+		if (Input.GetKey (KeyBinds.Back)){
+			toMove.z += -1;
+			Acceleration.z -= zAcceleration*SpeedStanceAccelerationModifiers[(int)moveSpeed]*Time.deltaTime;
+	}
+		if (Input.GetKey (KeyBinds.Left)){
+			toMove.x += -1;
+			Acceleration.x -= xAcceleration*SpeedStanceAccelerationModifiers[(int)moveSpeed]*Time.deltaTime;
+	}
+		if (Input.GetKey (KeyBinds.Right)) {
+			toMove.x += 1;
+			Acceleration.x += xAcceleration*SpeedStanceAccelerationModifiers[(int)moveSpeed]*Time.deltaTime;
+		}
+
+		if (Input.GetKeyDown (KeyCode.L)) {
+			ChangeStance (Stance.SLIDE);
+		}
 
 	}
 
@@ -171,18 +231,18 @@ public class MovementController : NetworkBehaviour {
 			if (AimingSights)
 				ToggleSights ();
 			if (!AimingSights && (player.Stamina > 2 || (player.Stamina > 0 && player.usingStamina))) {
-				moveSpeed = MoveSpeed.RUN;
+				moveSpeed = MoveSpeed.SPRINT;
 				player.usingStamina = true;
 				player.Stamina -= Time.deltaTime;
 			} else {
 				player.usingStamina = false;
 				if (AimingSights) 	moveSpeed = MoveSpeed.AIM;
-				else{	moveSpeed = MoveSpeed.WALK;	}
+				else{	moveSpeed = MoveSpeed.RUN;	}
 			}
 		}else {
 			player.usingStamina = false;
 			if (AimingSights) 	moveSpeed = MoveSpeed.AIM;
-			else{	moveSpeed = MoveSpeed.WALK;	}
+			else{	moveSpeed = MoveSpeed.RUN;	}
 		}
 		if (Input.GetKeyDown(KeyBinds.ToggleWeapon))
 			ToggleHolster();
@@ -192,7 +252,7 @@ public class MovementController : NetworkBehaviour {
 	void Crouch(){
 		switch (stance) {
 		case(Stance.STAND):{
-				if (moveSpeed == MoveSpeed.RUN && Vector3.Distance (transform.forward, controller.velocity.normalized) < .2f) {
+				if (moveSpeed == MoveSpeed.RUN ) {
 					ChangeStance (Stance.SLIDE);
 				} else {
 					ChangeStance (Stance.CROUCH);
@@ -217,17 +277,17 @@ public class MovementController : NetworkBehaviour {
 		switch (toStance) {
 		case(Stance.STAND):{
 				stance = Stance.STAND;
-				moveSpeed = MoveSpeed.WALK;
+				moveSpeed = MoveSpeed.RUN;
 				isCrouching = false;
 				lockout = false;
-				transform.localScale = new Vector3 (1f, 2f, 1f);
+			///	transform.localScale = new Vector3 (1f, 2f, 1f);
 				break;
 			}
 		case(Stance.CROUCH):{
 				stance = Stance.CROUCH;
-				moveSpeed = MoveSpeed.AIM;
+				moveSpeed = MoveSpeed.WALK;
 				isCrouching = true;
-				transform.localScale = new Vector3 (1f, 1.5f, 1f);
+		///		transform.localScale = new Vector3 (1f, 1.5f, 1f);
 				lockout =   false;
 				break;
 			}
@@ -236,7 +296,7 @@ public class MovementController : NetworkBehaviour {
 				Debug.Log("Sliding!");
 				isCrouching = true;
 				lockout = true;
-				transform.localScale = new Vector3(1f, 1f, 1f);
+		///		transform.localScale = new Vector3(1f, 1f, 1f);
 				StartSlide ();
 				break;
 			}
@@ -246,22 +306,21 @@ public class MovementController : NetworkBehaviour {
 	}
 
 	void StartSlide(){
-		transform.localScale = new Vector3(1f, 1f, 1f);
 		StartCoroutine (SlideHandler());
 	}
 
 	private IEnumerator SlideHandler(){
-		float elapsedTime = 0f;
 		gravityEnabled = true;
-		float slideSpeed=controller.velocity.magnitude*1.4f;
+		float slideSpeed = Velocity.magnitude*1.4f;
 		Debug.Log (slideSpeed);
-		Vector3 directionVector = transform.forward;//transform.TransformDirection(transform.forward);
-		while (slideSpeed > (int)MoveSpeed.AIM) {
+		Vector3 directionVector = Velocity.normalized;//transform.TransformDirection(transform.forward);
+		while (slideSpeed > 3) {
 			gravityEnabled = true;
 			controller.Move(directionVector.normalized*slideSpeed*Time.deltaTime);
-			slideSpeed = Mathf.Lerp (slideSpeed, 0f, .01f);
+			slideSpeed = Mathf.Lerp (slideSpeed, 0f, .015f);
 			yield return null;
 		}
+		Debug.Log ("End slide");
 		ChangeStance (Stance.STAND);
 	}
 
@@ -335,13 +394,7 @@ public class MovementController : NetworkBehaviour {
 		}
 	}
 
-	void Move(){
-		controller.Move (toMove.normalized * (float)moveSpeed * Time.deltaTime);
-		if (toJump) {
-			AddImpact (transform.up, jumpForce);
-			toJump = false;
-		}
-	}
+
 
 	void ForceMove(Vector3 vec){
 		controller.Move (vec * Time.deltaTime);
@@ -409,20 +462,74 @@ public class MovementController : NetworkBehaviour {
 		}
 	}
 
-	private void CheckGravity(){ //TODO literally just doesnt work idfk why
-		RaycastHit hit;
-		//Debug.DrawRay (transform.position, Vector3.down * gravityCheckDistance); 
+	private void CheckGravity(){ 
+		RaycastHit[] hit;
+		Debug.DrawRay (transform.position, Vector3.down * gravityCheckDistance); 
 		Ray GravityCheckingRay = new Ray (transform.position, transform.up*-1f);
-		Debug.DrawRay (transform.position,transform.up*-1f,Color.green,2f);
-		if (Physics.Raycast (GravityCheckingRay, out hit, gravityCheckDistance) ) {
-			if (hit.collider.transform.parent != gameObject && hit.collider.transform.gameObject != gameObject) {
-				gravityEnabled = false;
-			} else {
-				gravityEnabled = true;
-			}
-		} else {
+		//Debug.DrawRay (transform.position,transform.up*-1f,Color.green,2f);
+		hit =Physics.RaycastAll (transform.position, transform.up*-1, gravityCheckDistance); 
 			gravityEnabled = true;
+			foreach (RaycastHit h in hit) {
+				if (h.collider.gameObject != gameObject) {
+					gravityEnabled = false;
 		}
+	}
+}
+
+
+	void HandleAnimation(){
+		ani.SetInteger("Stance", (int)stance);
+		if (Velocity.normalized.z != 0f) {
+			ani.SetBool ("running", true);
+		} else {
+			ani.SetBool ("running", false);
+		}
+		ani.Play ("Jump",-1,0f);
+	}
+
+	void Move(){
+		controller.Move (Velocity*Time.deltaTime);
+		if (toJump) {
+			AddImpact (transform.up, jumpForce);
+			toJump = false;
+
+		}
+	}
+
+	void GenerateVelocityVector(){
+		Vector3 Friction = new Vector3 (0f, 0f, 0f);
+
+		float friction = .45f;
+
+
+		Acceleration = wayfinder.transform.TransformVector (Acceleration);
+
+		Vector3 VelocityLocalized = wayfinder.transform.InverseTransformVector (Velocity);
+
+//		Debug.Log (toMove.x);
+
+		if (toMove.x == 0) {
+			VelocityLocalized.x = 0;
+		} else if (Acceleration.x == 0) {
+		//	VelocityLocalized.x = Mathf.Lerp (VelocityLocalized.x, 0f, 5f*friction);
+		}
+
+		if (Mathf.Abs (VelocityLocalized.z) < 3f && Acceleration.z == 0) {
+			VelocityLocalized.z = 0;
+		} else if (Acceleration.z == 0) {
+			VelocityLocalized.z = Mathf.Lerp (VelocityLocalized.z, 0f, friction);
+		}
+
+		float dotProd = Vector3.Dot (wayfinder.transform.forward, Velocity);
+
+		VelocityLocalized.x = Mathf.Clamp (VelocityLocalized.x, MaxVelocityX * -1, MaxVelocityX*SpeedStanceModifiers[(int)moveSpeed]);
+		VelocityLocalized.z = Mathf.Clamp (VelocityLocalized.z, MaxVelocityZ * -1, MaxVelocityZ*SpeedStanceModifiers[(int)moveSpeed]);
+
+		Velocity = wayfinder.transform.TransformVector (VelocityLocalized);
+
+		Velocity += Acceleration;// + Friction;
+		Acceleration = new Vector3 ();
+
 	}
 
 

@@ -40,9 +40,15 @@ public abstract class Weapon : MonoBehaviour {
 	}
 
 	public virtual void Reload(){
-		if(ammo != maxAmmo && clips > 0)
+		if (ammo != maxAmmo && clips > 0) {
 			canFire = false;
-		reloadTimer = reloadTime;
+			reloadTimer = reloadTime;
+			try {
+				WeaponSoundSource.PlayOneShot (ReloadSound);
+			} catch {
+				Debug.Log ("This weapon needs a reload sound. " + name);
+			}
+		}
 	}
 
 	public virtual void Fire(){
@@ -88,7 +94,6 @@ public abstract class Weapon : MonoBehaviour {
 			}
 			else if (reloadTimer <= 0) {
 				//	Debug.Log ("Loaded!");
-				try{WeaponSoundSource.PlayOneShot(ReloadSound);}catch{Debug.Log("This weapon needs a reload sound. " + name);}
 				ammo = maxAmmo;
 				canFire = true;
 				clips -= 1;

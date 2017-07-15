@@ -91,7 +91,7 @@ public class MovementController : NetworkBehaviour {
 
 	//cam
 	Vector3 camDefaultPosition;
-	Vector3 camOverShoulderPosition= new Vector3(1f, .5f, -2.5f);
+	Vector3 camOverShoulderPosition;
 
 	float defaultFov = 90f;
 	float sightsFov = 45f;
@@ -123,6 +123,7 @@ public class MovementController : NetworkBehaviour {
 			moveSpeed = MoveSpeed.WALK;
 			ToggleCursorVisible ();
 			GravitySetup ();
+			camOverShoulderPosition= new Vector3(1f, camDefaultPosition.y, -2.5f);
 		} else {
 			cam.enabled = false;
 			GetComponent<AudioListener> ().enabled = false;
@@ -140,8 +141,7 @@ public class MovementController : NetworkBehaviour {
 
 
 	public override void OnStartLocalPlayer(){
-//		GetComponent<MeshRenderer>().material.color = Color.green;
-
+//called when player loads in
 	}
 	
 	// Update is called once per frame
@@ -289,14 +289,12 @@ public class MovementController : NetworkBehaviour {
 				moveSpeed = MoveSpeed.RUN;
 				isCrouching = false;
 				lockout = false;
-			///	transform.localScale = new Vector3 (1f, 2f, 1f);
 				break;
 			}
 		case(Stance.CROUCH):{
 				stance = Stance.CROUCH;
 				moveSpeed = MoveSpeed.WALK;
 				isCrouching = true;
-		///		transform.localScale = new Vector3 (1f, 1.5f, 1f);
 				lockout =   false;
 				break;
 			}
@@ -305,7 +303,6 @@ public class MovementController : NetworkBehaviour {
 				Debug.Log("Sliding!");
 				isCrouching = true;
 				lockout = true;
-		///		transform.localScale = new Vector3(1f, 1f, 1f);
 				StartSlide ();
 				break;
 			}
@@ -476,7 +473,7 @@ public class MovementController : NetworkBehaviour {
 
 	private void CheckGravity(){ 
 		RaycastHit[] hit;
-		Debug.DrawRay (transform.position, Vector3.down * gravityCheckDistance); 
+		//Debug.DrawRay (transform.position, Vector3.down * gravityCheckDistance); 
 		Ray GravityCheckingRay = new Ray (transform.position, transform.up*-1f);
 		//Debug.DrawRay (transform.position,transform.up*-1f,Color.green,2f);
 		hit =Physics.RaycastAll (transform.position, transform.up*-1, gravityCheckDistance); 
@@ -502,7 +499,7 @@ public class MovementController : NetworkBehaviour {
 	void Move(){
 		controller.Move (Velocity*Time.deltaTime);
 		if (toJump) {
-		//	AddImpact (transform.up, jumpForce);
+			AddImpact (transform.up, jumpForce);
 			toJump = false;
 
 		}
@@ -518,12 +515,9 @@ public class MovementController : NetworkBehaviour {
 
 		Vector3 VelocityLocalized = wayfinder.transform.InverseTransformVector (Velocity);
 
-//		Debug.Log (toMove.x);
 
 		if (toMove.x == 0) {
 			VelocityLocalized.x = 0;
-		} else if (Acceleration.x == 0) {
-		//	VelocityLocalized.x = Mathf.Lerp (VelocityLocalized.x, 0f, 5f*friction);
 		}
 
 		if (Mathf.Abs (VelocityLocalized.z) < 3f && Acceleration.z == 0) {

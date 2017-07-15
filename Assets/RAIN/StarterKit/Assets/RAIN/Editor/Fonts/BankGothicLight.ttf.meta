@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: 91363fa505a0464489605e09d4322805
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: BankGothic Lt BT
+  fontNames:
+  - BankGothic Lt BT
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 5f13dee69bea42a4098b459231233577, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

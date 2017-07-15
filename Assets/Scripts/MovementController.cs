@@ -71,7 +71,6 @@ public class MovementController : NetworkBehaviour {
 
 	float MaxVelocityX = 4f;
 	float MaxVelocityZ = 4f;
-	float backwardsModifiersMaxSpeed = .4f;
 
 	Vector3 Acceleration;
 	Vector3 Velocity;
@@ -105,7 +104,7 @@ public class MovementController : NetworkBehaviour {
 
 	//Gravity
 	public bool usesGravity = true;
-	float gravityCheckOffsetDistance = .11f;
+	float gravityCheckOffsetDistance = .1f;
 	float gravityCheckDistance;
 	public bool gravityEnabled;
 	public float currGravity;
@@ -141,7 +140,7 @@ public class MovementController : NetworkBehaviour {
 
 
 	public override void OnStartLocalPlayer(){
-		GetComponent<MeshRenderer>().material.color = Color.green;
+//		GetComponent<MeshRenderer>().material.color = Color.green;
 
 	}
 	
@@ -320,7 +319,8 @@ public class MovementController : NetworkBehaviour {
 	}
 
 	private IEnumerator SlideHandler(){
-		ani.SetTrigger ("SlideTrigger");
+		//ani.SetTrigger ("SlideTrigger");
+		ani.Play ("Slide");
 		gravityEnabled = true;
 		float slideSpeed = Velocity.magnitude*1.8f;
 		Debug.Log (slideSpeed);
@@ -495,13 +495,14 @@ public class MovementController : NetworkBehaviour {
 		} else {
 			ani.SetBool ("running", false);
 		}
+		if(toJump)
 		ani.Play ("Jump",-1,0f);
 	}
 
 	void Move(){
 		controller.Move (Velocity*Time.deltaTime);
 		if (toJump) {
-			AddImpact (transform.up, jumpForce);
+		//	AddImpact (transform.up, jumpForce);
 			toJump = false;
 
 		}

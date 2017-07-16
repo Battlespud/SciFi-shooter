@@ -5,11 +5,13 @@ using UnityEngine.UI;
 
 public class LaserRifle : Weapon {
 
-	const float LaserTrail = .025f;
+	const float LaserTrail = 5.075f;
 
 
 
 	public GameObject lrPrefab;
+
+	public bool useTrueAim = false;
 
 
 	//sanity check, prevents infinite loop
@@ -47,16 +49,24 @@ public class LaserRifle : Weapon {
 		if (!canFire || ammo <= 0) {
 			return;
 		}
-	//	Debug.DrawRay (Muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction * maxRange, Color.red, 3f);
+	//	Debug.DrawRay (Muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction * maxRange, Color.green, 3f);
+	//	Debug.DrawRay (Muzzle.transform.position, Muzzle.transform.forward * maxRange, Color.red);
+
 		RaycastHit hit;
-		Ray firingRay = new Ray (Muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction);
+		Ray firingRay;
+		if (useTrueAim) {
+			firingRay = new Ray (Muzzle.transform.position, Muzzle.transform.forward*maxRange);
+		} else {
+			
+			firingRay = new Ray (Muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction);
+		}
 		ammo--;
 		OnFire ();
 		HandleCooldown ();
 		WeaponSoundSource.PlayOneShot (FireSound);
 		if (Physics.Raycast (firingRay, out hit, maxRange)) {
 			if (hit.collider.gameObject.GetComponent<Player> ()) {
-				movementController.CmdDamage (damage, hit.collider.gameObject.GetComponent<Player> ());
+				hit.collider.GetComponent<Player>().Damage(damage);
 				StartCoroutine (LineRendererHandlerFirstShot (hit.point));
 			} else {
 				if (hit.point != null) {
@@ -67,7 +77,11 @@ public class LaserRifle : Weapon {
 				}
 			}
 		} else {
-			StartCoroutine (LineRendererHandlerFirstShot (Muzzle.transform.position + (cam.ScreenPointToRay (Input.mousePosition).direction * maxRange)));
+			if (!useTrueAim) {
+				StartCoroutine (LineRendererHandlerFirstShot (Muzzle.transform.position + (cam.ScreenPointToRay (Input.mousePosition).direction * maxRange)));
+			} else {
+				StartCoroutine (LineRendererHandlerFirstShot (Muzzle.transform.position + (Muzzle.transform.forward * maxRange)));
+			}
 		}
 
 	}
@@ -83,7 +97,7 @@ public class LaserRifle : Weapon {
 		RaycastHit newHit;
 		if (Physics.Raycast (newFiringRay, out newHit, maxRange)) {
 			if (newHit.collider.gameObject.GetComponent<Player> ()) {
-				movementController.CmdDamage (damage, newHit.collider.gameObject.GetComponent<Player> ());
+				newHit.collider.GetComponent<Player>().Damage(damage);
 				StartCoroutine (LineRendererHandler (hit.point, newHit.point));
 			} else {			//not player
 				if (newHit.point != null) {
@@ -140,5 +154,6 @@ public class LaserRifle : Weapon {
 	}
 	#endregion
 	#endregion
+
 
 }

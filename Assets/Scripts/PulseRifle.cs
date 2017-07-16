@@ -38,7 +38,7 @@ public class PulseRifle : Weapon {
 			return;
 		}
 		GameObject G = Instantiate (Projectile) as GameObject;
-		G.transform.position = Muzzle.transform.position;
+		G.transform.position = Muzzle.transform.position; 
 		Rigidbody rb = G.GetComponent<Rigidbody> ();
 		rb.AddForce (Muzzle.transform.forward * projectileForce);
         ammo--;

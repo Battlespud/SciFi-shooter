@@ -20,14 +20,12 @@ public abstract class Weapon : MonoBehaviour {
 
 	public Light MuzzleFlash;
 
-	public MovementController movementController;
 	public Camera cam;
 
 
 
 
 	public virtual void LoadReferences(){
-		movementController = transform.parent.GetComponentInParent<MovementController> ();
 		cam = Camera.main;
 
 		//Muzzle
@@ -131,11 +129,15 @@ public abstract class Weapon : MonoBehaviour {
 			}
 		}
 		try{
-		Pivot.transform.rotation = Quaternion.LookRotation (cam.ScreenPointToRay (Input.mousePosition).direction);
+			if(Pivot!=null){
+		//Pivot.transform.rotation = Quaternion.LookRotation (cam.ScreenPointToRay (Input.mousePosition).direction); //even when null this somehow causes an issue, idgi
+			}
 		}
 		catch{
 			//I literally dont care. it'll work.
 		}
 		AmmoText.text = ammo.ToString();
+		Debug.DrawRay (Muzzle.transform.position, Muzzle.transform.forward * maxRange, Color.yellow);
+
 	}
 }

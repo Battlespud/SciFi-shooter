@@ -5,6 +5,8 @@ using UnityEngine;
 public class RootMotionMovementController : MonoBehaviour {
 
 
+	public Weapon weapon;
+
 	float inertia = .8f;
 
 	Animator ani;
@@ -14,6 +16,8 @@ public class RootMotionMovementController : MonoBehaviour {
 	Vector3 toMove;
 
 	float speed = 1f;
+
+	bool PistolOut=false;
 
 
 	// Use this for initialization
@@ -43,6 +47,16 @@ public class RootMotionMovementController : MonoBehaviour {
 		}
 		if (Input.GetKeyDown (KeyCode.F)) {
 			ani.SetTrigger ("Slide");
+		}
+		if (Input.GetKeyDown (KeyCode.H)) {
+			PistolOut = !PistolOut;
+		}
+
+		if (Input.GetKey (KeyCode.Mouse0)) {
+			weapon.Fire ();
+		}
+		if (Input.GetKeyDown (KeyCode.R)) {
+			weapon.Reload();
 		}
 
 		if( Input.GetAxis ("Mouse X") > 0){
@@ -99,6 +113,6 @@ public class RootMotionMovementController : MonoBehaviour {
 		ani.SetBool ("isCrouching", isCrouching);
 		ani.SetFloat ("VelocityRight", toMove.x);
 		ani.SetFloat ("VelocityForward", toMove.z);
-
+		ani.SetBool ("PistolOut", PistolOut);
 	}
 }

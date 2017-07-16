@@ -5,12 +5,11 @@ using UnityEngine.UI;
 
 public class LaserRifle : Weapon {
 
-	const float LaserTrail = .075f;
+	const float LaserTrail = .025f;
 
 
 
 	public GameObject lrPrefab;
-	public GameObject muzzle;
 
 
 	//sanity check, prevents infinite loop
@@ -22,15 +21,17 @@ public class LaserRifle : Weapon {
 	void Start () {
 		name = "LaserRifle";
 		maxRange = 250;
-		damage = 20;
-		maxAmmo = 48;
+		damage = 40;
+		maxAmmo = 7;
 		ammo = maxAmmo;
 		maxClips = 12;
 		clips = maxClips;
 		accuracy = 1f;
-		cooldown = .35f;
-		reloadTime = .85f;
+		cooldown = .30f;
+		reloadTime = 1.4f;
 		canFire = true;
+
+		automatic = false;
 
 		LoadReferences ();
 	}
@@ -43,17 +44,15 @@ public class LaserRifle : Weapon {
 	#region shooting
 	public override void Fire(){
 		bounces = 0;
-		CmdFire ();
-	}
-
-	public void CmdFire(){
 		if (!canFire || ammo <= 0) {
 			return;
 		}
-	//	Debug.DrawRay (muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction * maxRange, Color.red, 3f);
+	//	Debug.DrawRay (Muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction * maxRange, Color.red, 3f);
 		RaycastHit hit;
-		Ray firingRay = new Ray (muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction);
+		Ray firingRay = new Ray (Muzzle.transform.position, cam.ScreenPointToRay (Input.mousePosition).direction);
 		ammo--;
+		OnFire ();
+		HandleCooldown ();
 		WeaponSoundSource.PlayOneShot (FireSound);
 		if (Physics.Raycast (firingRay, out hit, maxRange)) {
 			if (hit.collider.gameObject.GetComponent<Player> ()) {
@@ -68,7 +67,7 @@ public class LaserRifle : Weapon {
 				}
 			}
 		} else {
-			StartCoroutine (LineRendererHandlerFirstShot (muzzle.transform.position + (cam.ScreenPointToRay (Input.mousePosition).direction * maxRange)));
+			StartCoroutine (LineRendererHandlerFirstShot (Muzzle.transform.position + (cam.ScreenPointToRay (Input.mousePosition).direction * maxRange)));
 		}
 
 	}
@@ -79,7 +78,6 @@ public class LaserRifle : Weapon {
 		}
 		bounces++;
 	//	Debug.Log ("Bounce laser");
-		//StartCoroutine (LineRendererHandler (hit.point,Vector3.Reflect(firingRay.direction,hit.normal)*maxRange));
 	//	Debug.DrawRay (hit.transform.position, Vector3.Reflect(firingRay.direction,hit.normal)*maxRange, Color.red, 3f);
 		Ray newFiringRay = new Ray(hit.transform.position, Vector3.Reflect(firingRay.direction,hit.normal));
 		RaycastHit newHit;
@@ -111,11 +109,11 @@ public class LaserRifle : Weapon {
 		MuzzleFlash.color = Color.cyan;
 		lr.startColor = Color.cyan;
 		lr.endColor = Color.cyan;
-		renderer.transform.position = muzzle.transform.position;
+		renderer.transform.position = Muzzle.transform.position;
 		float time = LaserTrail;
 		float elapsedTime = 0f;
 		lr.enabled = true;
-		lr.SetPositions(new Vector3[2]{muzzle.transform.position,endPos});
+		lr.SetPositions(new Vector3[2]{Muzzle.transform.position,endPos});
 		while (elapsedTime < time) {
 			elapsedTime += Time.deltaTime;
 			yield return null;

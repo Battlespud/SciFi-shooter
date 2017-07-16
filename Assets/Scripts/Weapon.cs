@@ -9,6 +9,9 @@ public abstract class Weapon : MonoBehaviour {
 	//Rotation
 	public GameObject Pivot;
 
+	//Position of shots
+	public GameObject Muzzle;
+
 	//Sound
 	public AudioClip FireSound;
 	public AudioClip ReloadSound;
@@ -21,9 +24,14 @@ public abstract class Weapon : MonoBehaviour {
 	public Camera cam;
 
 
+
+
 	public virtual void LoadReferences(){
 		movementController = transform.parent.GetComponentInParent<MovementController> ();
 		cam = Camera.main;
+
+		//Muzzle
+
 		Pivot = gameObject.transform.parent.gameObject;
 
 		//Light
@@ -41,7 +49,8 @@ public abstract class Weapon : MonoBehaviour {
 
 	public virtual void Reload(){
 		if (ammo != maxAmmo && clips > 0) {
-			canFire = false;
+			reload = true;
+			ammo = 0;
 			reloadTimer = reloadTime;
 			try {
 				WeaponSoundSource.PlayOneShot (ReloadSound);
@@ -52,11 +61,30 @@ public abstract class Weapon : MonoBehaviour {
 	}
 
 	public virtual void Fire(){
-		if (ammo > 0) {
+		if (ammo > 0 && canFire) {
 			try{WeaponSoundSource.PlayOneShot (FireSound);}catch{Debug.Log ("This weapon needs a firing sound. " + name);}
 			ammo--;
+			OnFire ();
 		}
 		Debug.Log ("You need to write a custom fire method for this weapon still");
+	}
+
+	public virtual void OnFire(){
+		MuzzleFlash.enabled = true;
+		Invoke ("EndMuzzleFlash", cooldown);
+	}
+
+	public virtual void HandleCooldown(){
+		canFire = false;
+		Invoke("CheckCooldown",cooldown);
+	}
+
+	public virtual void CheckCooldown(){
+		canFire = true;
+	}
+
+	public void EndMuzzleFlash(){
+		MuzzleFlash.enabled = false;
 	}
 
 	public string name;
@@ -73,11 +101,12 @@ public abstract class Weapon : MonoBehaviour {
 	public float accuracy;
 
 	public bool automatic = true;
+	bool reload = false;
 
 	//between shots
 	public float cooldownTimer;
 	public float cooldown;
-	public bool canFire;
+	public bool canFire=true;
 
 
 	public float reloadTime;
@@ -91,15 +120,14 @@ public abstract class Weapon : MonoBehaviour {
 
 
 	public virtual void Update () {
-		if (!canFire) {
+		if (reload) {
 			if (reloadTimer > 0) {
 				reloadTimer -= Time.deltaTime;
-			}
-			else if (reloadTimer <= 0) {
+			} else if (reloadTimer <= 0) {
 				//	Debug.Log ("Loaded!");
 				ammo = maxAmmo;
-				canFire = true;
 				clips -= 1;
+				reload = false;
 			}
 		}
 		try{

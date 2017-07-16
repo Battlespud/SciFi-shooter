@@ -56,20 +56,14 @@ public class Player : NetworkBehaviour
 
     public void Damage(int amount)
     {
-        if (!isServer)
-            return;
+     //   if (!isServer)
+       //     return;
+		HP -= amount;
+		if (HP < 0) {
+			HP = 0;
+		}
 
-        if (Input.GetKeyDown(KeyCode.Z))
-        {
-            Debug.Log(string.Format("HP was {0}; Applied {1} damage points; HP is {2}", HP, amount, HP - amount));
-            HP -= amount;
-        }
 
-        if (HP <= 0)
-        {
-            HP = 0;
-            Debug.Log("Dead");
-        }
     }
 
 	void RegenStamina(){

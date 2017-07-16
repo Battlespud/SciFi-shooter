@@ -3,6 +3,8 @@
 [AddComponentMenu("Camera/Simple Smooth Mouse Look ")]
 public class SmoothMouselook: MonoBehaviour
 {
+	Animator ani;
+
 	Vector2 _mouseAbsolute;
 	Vector2 _smoothMouse;
 
@@ -19,6 +21,11 @@ public class SmoothMouselook: MonoBehaviour
 
 	void Start()
 	{
+		try{
+//			ani = GetComponentInParent<Animator>();
+		}
+		catch{
+		}
 		// Set target direction to the camera's initial orientation.
 		targetDirection = transform.localRotation.eulerAngles;
 
@@ -49,6 +56,8 @@ public class SmoothMouselook: MonoBehaviour
 		_smoothMouse.x = Mathf.Lerp(_smoothMouse.x, mouseDelta.x, 1f / smoothing.x);
 		_smoothMouse.y = Mathf.Lerp(_smoothMouse.y, mouseDelta.y, 1f / smoothing.y);
 
+
+
 		// Find the absolute mouse movement value from point zero.
 		_mouseAbsolute += _smoothMouse;
 
@@ -63,12 +72,10 @@ public class SmoothMouselook: MonoBehaviour
 		transform.localRotation = Quaternion.AngleAxis(-_mouseAbsolute.y, targetOrientation * Vector3.right) * targetOrientation;
 
 		// If there's a character body that acts as a parent to the camera
-		if (characterBody)
-		{
-			var yRotation = Quaternion.AngleAxis(_mouseAbsolute.x, Vector3.up);
+		if (characterBody && ani == null) {
+			var yRotation = Quaternion.AngleAxis (_mouseAbsolute.x, Vector3.up);
 			characterBody.transform.localRotation = yRotation * targetCharacterOrientation;
-		}
-		else
+		} else if (ani == null)
 		{
 			var yRotation = Quaternion.AngleAxis(_mouseAbsolute.x, transform.InverseTransformDirection(Vector3.up));
 			transform.localRotation *= yRotation;

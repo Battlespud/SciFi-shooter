@@ -42,7 +42,7 @@ public class PulseRifle : Weapon {
 		Rigidbody rb = G.GetComponent<Rigidbody> ();
 		rb.AddForce (Muzzle.transform.forward * projectileForce);
         ammo--;
-		OnFire ();
+	//	OnFire ();
 		HandleCooldown();
     }
 

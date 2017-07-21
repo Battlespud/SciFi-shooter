@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class LaserRifle : Weapon {
 
-	const float LaserTrail = 5.075f;
+	const float LaserTrail = .075f;
 
 
 

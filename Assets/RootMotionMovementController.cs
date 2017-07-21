@@ -6,6 +6,7 @@ public class RootMotionMovementController : MonoBehaviour {
 
 
 	public Weapon weapon;
+	public Texture2D cursor;
 
 	float inertia = .8f;
 
@@ -23,6 +24,8 @@ public class RootMotionMovementController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		ani = GetComponent<Animator> ();
+		Cursor.SetCursor (cursor, new Vector2(16,16), CursorMode.ForceSoftware);
+		ToggleCursorVisible ();
 	}
 	
 	// Update is called once per frame
@@ -50,6 +53,7 @@ public class RootMotionMovementController : MonoBehaviour {
 		}
 		if (Input.GetKeyDown (KeyCode.H)) {
 			PistolOut = !PistolOut;
+			ToggleCursorVisible();
 		}
 
 		if (Input.GetKey (KeyCode.Mouse0)) {
@@ -107,6 +111,16 @@ public class RootMotionMovementController : MonoBehaviour {
 				toMove.x = 0f;
 		}
 
+	}
+
+	void ToggleCursorVisible(){
+		if (Cursor.visible) {
+			Cursor.visible = false;
+			Cursor.lockState = CursorLockMode.Locked;
+		} else {
+			Cursor.visible = true;
+			Cursor.lockState = CursorLockMode.Locked;
+		}
 	}
 
 	void UpdateAnimations(){

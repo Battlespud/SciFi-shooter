@@ -28,11 +28,12 @@ public class Bullet : MonoBehaviour {
 		if(col.collider.gameObject.GetComponentInChildren<Player>()!=null){
 			col.collider.gameObject.GetComponentInChildren<Player>().Damage(3);
 		}
-		Debug.Log("Hit " + col.collider.gameObject.name);
-		if(!col.gameObject.CompareTag("Reflective")){
-	//	GameObject.Destroy(GetComponent<Rigidbody>());
-			GameObject.Destroy(this);
+		if(col.gameObject.CompareTag("Reflective")){
+			return;
 		}
+		Debug.Log (col.gameObject.name);
+		Destroy(gameObject);
+
 	}
 
 
